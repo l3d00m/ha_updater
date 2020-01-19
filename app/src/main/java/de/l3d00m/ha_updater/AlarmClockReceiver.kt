@@ -1,10 +1,9 @@
-package de.l3d00m.HAupdater
+package de.l3d00m.ha_updater
 
 import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.provider.Settings
 import android.util.Log
 
 class AlarmClockReceiver : BroadcastReceiver() {

@@ -1,10 +1,6 @@
-package de.l3d00m.HAupdater
+package de.l3d00m.ha_updater
 
-import android.app.AlarmManager
-import android.content.Context
 import android.os.Bundle
-import android.provider.Settings
-import android.util.Log
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu

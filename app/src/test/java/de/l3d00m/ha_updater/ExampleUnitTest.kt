@@ -1,4 +1,4 @@
-package de.l3d00m.HAupdater
+package de.l3d00m.ha_updater
 
 import org.junit.Test
 
