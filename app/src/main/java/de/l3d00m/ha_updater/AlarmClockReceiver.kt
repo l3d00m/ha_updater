@@ -15,8 +15,7 @@ class AlarmClockReceiver : BroadcastReceiver() {
         val alarmManager: AlarmManager? =
             context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         val clockInfo: AlarmManager.AlarmClockInfo? = alarmManager?.nextAlarmClock
-        val time = clockInfo?.triggerTime ?: 0
-        return time
+        return clockInfo?.triggerTime ?: 0
     }
 
 }
