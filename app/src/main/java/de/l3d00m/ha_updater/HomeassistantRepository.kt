@@ -6,8 +6,10 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-const val BASE_URL = "https://jsonplaceholder.typicode.com/"
-const val ENTITY_ID = "a_alarm_clock"
+const val BASE_URL = "http://192.168.0.40:8123/api/"
+const val ENTITY_ID = "sensor.alarm_clock"
+const val AUTH_TOKEN =
+    "Bearer " + ""
 
 class HomeassistantRepository {
     private val client: HomeassistantAPI by lazy {
@@ -30,5 +32,5 @@ class HomeassistantRepository {
     }
 
     suspend fun putState(newState: Int) =
-        client.updateEntity(ENTITY_ID, HomeassistantState(newState))
+        client.updateEntity(AUTH_TOKEN, ENTITY_ID, HomeassistantPOJO.Entity(newState))
 }
