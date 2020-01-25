@@ -3,4 +3,5 @@
     <string name="HA_API_TOKEN">ha_api_token</string>
     <string name="ALARM_ENTITY_ID">alarm_entity_id</string>
     <string name="HA_URL">ha_api_url</string>
+    <string name="ENABLE_PUSH_ALARM">enable_alarm_clock</string>
 </resources>

@@ -6,5 +6,6 @@
     <string name="edit_title_access_token">Access token (long lived)</string>
     <string name="edit_desc_ha_url">Location of Home Assistant including port</string>
     <string name="switch_desc_alarm">Push time of the next upcoming alarm to Home Assistant</string>
-    <string name="edit_desc_entity_id">Required, no ID provided</string>
+    <string name="edit_desc_entity_id">Entity of type input_datetime</string>
+    <string name="category_alarm">Alarm clock</string>
 </resources>

@@ -39,7 +39,7 @@ class HomeassistantRepository(var url: String) {
         retrofit.create(HomeassistantAPI::class.java)
     }
 
-    suspend fun putState(newState: Int, context: Context): HomeassistantPOJO.EntityResponse? {
+    suspend fun putState(newState: Long, context: Context): HomeassistantPOJO.EntityResponse? {
         //TODO Error Handling, default values etc
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val authTokenKey = context.resources.getString(R.string.HA_API_TOKEN)

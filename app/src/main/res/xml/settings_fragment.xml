@@ -19,11 +19,11 @@
 
     <PreferenceCategory
         app:key="alarm_category"
-        app:title="Alarm clock">
+        app:title="@string/category_alarm">
 
         <SwitchPreferenceCompat
             app:icon="@drawable/ic_access_alarm_black_24dp"
-            app:key="enable_alarm_clock"
+            app:key="@string/ENABLE_PUSH_ALARM"
             app:summary="@string/switch_desc_alarm"
             app:title="@string/switch_title_alarm" />
 

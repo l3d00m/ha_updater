@@ -12,7 +12,7 @@ object HomeassistantPOJO {
 
     data class Entity(
         @SerializedName("state")
-        val newState: Int
+        val newState: Long
     )
 
 }
