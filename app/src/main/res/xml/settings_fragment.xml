@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <EditTextPreference
+        app:key="ha_api_url"
+        app:icon="@drawable/ic_cloud_upload_black_24dp"
+        app:summary="Location including the API path"
+        app:title="Home Assistant API URL" />
+    <EditTextPreference
+        app:key="ha_api_token"
+        app:icon="@drawable/ic_cloud_upload_black_24dp"
+        app:summary=""
+        app:title="Access token (long lived)" />
+
+    <PreferenceCategory
+        app:key="alarm_category"
+        app:title="Alarm clock">
+
+        <SwitchPreferenceCompat
+            app:icon="@drawable/ic_access_alarm_black_24dp"
+            app:key="enable_alarm_clock"
+            app:summary="Push time of the next upcoming alarm to Home Assistant"
+            app:title="@string/switch_enable_alarm" />
+
+        <EditTextPreference
+            app:key="alarm_entity_id"
+            app:summary="Required, no ID provided"
+            app:title="Entity ID" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

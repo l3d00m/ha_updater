@@ -13,6 +13,12 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.fragment_container, MainSettingsFragment())
+            .commit()
+
+
         setSupportActionBar(toolbar)
         val ergebnis = this.launch { repository.putState(12) }
     }

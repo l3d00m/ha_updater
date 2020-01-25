@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Pusher for Home Assistant</string>
-    <string name="switch_enable_clock">Enable Clock Updates</string>
+    <string name="switch_enable_alarm">Enable Clock Updates</string>
     <string name="desc_api_url">Home Assistant API URL</string>
 </resources>
