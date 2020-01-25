@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">Pusher for Home Assistant</string>
-    <string name="switch_enable_alarm">Enable Clock Updates</string>
-    <string name="desc_api_url">Home Assistant API URL</string>
+    <string name="switch_title_alarm">Enable Clock Updates</string>
+    <string name="edit_title_ha_url">Home Assistant URL</string>
+    <string name="edit_title_entity_id">Entity ID</string>
+    <string name="edit_title_access_token">Access token (long lived)</string>
+    <string name="edit_desc_ha_url">Location of Home Assistant including port</string>
+    <string name="switch_desc_alarm">Push time of the next upcoming alarm to Home Assistant</string>
+    <string name="edit_desc_entity_id">Required, no ID provided</string>
 </resources>

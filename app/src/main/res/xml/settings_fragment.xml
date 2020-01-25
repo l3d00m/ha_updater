@@ -7,15 +7,15 @@
     tools:context=".MainActivity">
 
     <EditTextPreference
-        app:key="ha_api_url"
+        app:key="@string/HA_URL"
         app:icon="@drawable/ic_cloud_upload_black_24dp"
-        app:summary="Location including the API path"
-        app:title="Home Assistant API URL" />
+        app:summary="@string/edit_desc_ha_url"
+        app:title="@string/edit_title_ha_url" />
     <EditTextPreference
-        app:key="ha_api_token"
-        app:icon="@drawable/ic_cloud_upload_black_24dp"
+        app:key="@string/HA_API_TOKEN"
+        app:icon="@drawable/ic_vpn_key_black_24dp"
         app:summary=""
-        app:title="Access token (long lived)" />
+        app:title="@string/edit_title_access_token" />
 
     <PreferenceCategory
         app:key="alarm_category"
@@ -24,13 +24,13 @@
         <SwitchPreferenceCompat
             app:icon="@drawable/ic_access_alarm_black_24dp"
             app:key="enable_alarm_clock"
-            app:summary="Push time of the next upcoming alarm to Home Assistant"
-            app:title="@string/switch_enable_alarm" />
+            app:summary="@string/switch_desc_alarm"
+            app:title="@string/switch_title_alarm" />
 
         <EditTextPreference
-            app:key="alarm_entity_id"
-            app:summary="Required, no ID provided"
-            app:title="Entity ID" />
+            app:key="@string/ALARM_ENTITY_ID"
+            app:summary="@string/edit_desc_entity_id"
+            app:title="@string/edit_title_entity_id" />
     </PreferenceCategory>
 
 </PreferenceScreen>

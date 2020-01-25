@@ -4,11 +4,13 @@ import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import timber.log.Timber
 
 class AlarmClockReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d("Hasdasdi", "Next alarm: " + getNextAlarmMs(context))
+        if (intent.action != AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED)
+            return // Wrong action, return
+        Timber.d("Next alarm: %l", getNextAlarmMs(context))
     }
 
     private fun getNextAlarmMs(context: Context): Long {

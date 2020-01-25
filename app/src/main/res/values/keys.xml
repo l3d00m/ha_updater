@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="HA_API_TOKEN">ha_api_token</string>
+    <string name="ALARM_ENTITY_ID">alarm_entity_id</string>
+    <string name="HA_URL">ha_api_url</string>
+</resources>
