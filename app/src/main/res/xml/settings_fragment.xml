@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
     <EditTextPreference
-        app:key="@string/HA_URL"
         app:icon="@drawable/ic_cloud_upload_black_24dp"
+        app:key="@string/HA_URL"
         app:summary="@string/edit_desc_ha_url"
         app:title="@string/edit_title_ha_url" />
     <EditTextPreference
-        app:key="@string/HA_API_TOKEN"
         app:icon="@drawable/ic_vpn_key_black_24dp"
-        app:summary=""
+        app:key="@string/HA_API_TOKEN"
         app:title="@string/edit_title_access_token" />
+    <Preference
+        app:key="@string/CONNECTION_STATE"
+        android:clickable="false"
+        app:summary="Not connected"
+        app:title="Connection status" />
 
     <PreferenceCategory
         app:key="alarm_category"

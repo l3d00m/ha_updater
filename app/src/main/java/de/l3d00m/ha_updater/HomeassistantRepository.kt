@@ -23,11 +23,9 @@ class HomeassistantRepository(var url: String) {
             OkHttpClient.Builder().addInterceptor(interceptor).build()
         } else OkHttpClient.Builder().build()
 
-        // Fix URL in case user enters it wrong and append api path if not already added
+        // Fix URL in case user enters it wrong
         if (!url.endsWith("/"))
             url += "/"
-        if (!url.endsWith("api/"))
-            url += "api/"
 
 
         val retrofit = Retrofit.Builder()
@@ -53,5 +51,10 @@ class HomeassistantRepository(var url: String) {
             Timber.w("Putting state failed with HTTP ${he.code()}: ${he.message()}")
             null
         }
+    }
+
+    suspend fun getStatus(token: String): HomeassistantPOJO.ApiResponse? {
+        val authToken = "Bearer $token"
+        return client.getApiStatus(authToken)
     }
 }

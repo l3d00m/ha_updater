@@ -4,4 +4,5 @@
     <string name="ALARM_ENTITY_ID">alarm_entity_id</string>
     <string name="HA_URL">ha_api_url</string>
     <string name="ENABLE_PUSH_ALARM">enable_alarm_clock</string>
+    <string name="CONNECTION_STATE">connection_state</string>
 </resources>

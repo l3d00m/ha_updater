@@ -15,4 +15,8 @@ object HomeassistantPOJO {
         val newState: Long
     )
 
+    data class ApiResponse(
+        val message: String
+    )
+
 }
