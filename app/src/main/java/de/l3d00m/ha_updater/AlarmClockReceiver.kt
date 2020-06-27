@@ -20,14 +20,7 @@ class AlarmClockReceiver : BroadcastReceiver() {
             return
         }
         val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
-            when (exception) {
-                is HttpException -> {
-                    Timber.w("Pushing new alarm date failed with HTTP Error ${exception.code()}: ${exception.message()}")
-                }
-                else -> {
-                    Timber.w("Pushing new alarm date failed with $exception")
-                }
-            }
+            Timber.w("Pushing new alarm date failed with $exception")
         }
         GlobalScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
             val entityId = HomeassistantInteractor(context).pushNewAlarm()

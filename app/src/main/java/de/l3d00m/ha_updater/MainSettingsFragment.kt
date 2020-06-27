@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreferenceCompat
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -36,35 +37,52 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
         super.onViewCreated(view, savedInstanceState)
         val prefs = Prefs(requireContext())
         updateConnectionStatus(prefs.homeassistantUrl, prefs.apiToken)
+        setEnableSwitchState(prefs.homeassistantUrl, prefs.apiToken, prefs.entityId)
     }
 
     override fun onPreferenceChange(preference: Preference?, newValue: Any?): Boolean {
-        val url: String?
-        val token: String?
         val prefs = Prefs(requireContext())
+        var url = prefs.homeassistantUrl
+        var token = prefs.apiToken
+        var entityId = prefs.entityId
+
         when (preference?.key) {
             resources.getString(R.string.HA_URL) -> {
-                url = newValue as? String
-                updateConnectionStatus(url, prefs.apiToken)
+                url = newValue as? String ?: ""
+                updateConnectionStatus(url, token)
             }
             resources.getString(R.string.HA_API_TOKEN) -> {
-                token = newValue as? String
-                updateConnectionStatus(prefs.homeassistantUrl, token)
+                token = newValue as? String ?: ""
+                updateConnectionStatus(url, token)
             }
             resources.getString(R.string.ALARM_ENTITY_ID) -> {
-                val entityId = newValue as? String
-                if (entityId != null && !entityId.startsWith("input_datetime.")) {
+                entityId = newValue as? String ?: ""
+                if (entityId.isNotEmpty() && !entityId.startsWith("input_datetime.")) {
                     Toast.makeText(context, "Not saved - entity has to be of type input_datetime", Toast.LENGTH_LONG).show()
                     return false
                 }
             }
         }
+        setEnableSwitchState(url, token, entityId)
+
         return true
     }
 
-    private fun updateConnectionStatus(url: String?, token: String?) {
+    private fun setEnableSwitchState(url: String, token: String, entityId: String) {
+        val enableSwitch: SwitchPreferenceCompat? = findPreference(resources.getString(R.string.ENABLE_PUSH_ALARM))!!
+        val shouldBeEnabled = url.isNotEmpty() && token.isNotEmpty() && entityId.isNotEmpty()
+        enableSwitch?.isChecked = if (shouldBeEnabled)
+            enableSwitch!!.isChecked
+        else
+            false
+        enableSwitch?.isEnabled = shouldBeEnabled
+
+
+    }
+
+    private fun updateConnectionStatus(url: String, token: String) {
         val connectionState: Preference? = findPreference(resources.getString(R.string.CONNECTION_STATE))
-        if (token == null) {
+        if (token.isEmpty()) {
             connectionState?.summary = "Not connected - no access token provided"
             return
         }
@@ -74,8 +92,7 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
         }
         connectionState?.summary = "Connecting..."
 
-        // Force Url not null because URLUtil would have complained if null
-        val repository = HomeassistantRepository(url!!, token.trim())
+        val repository = HomeassistantRepository(url, token.trim())
         val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
             when (exception) {
                 is HttpException -> {

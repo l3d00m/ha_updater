@@ -14,6 +14,8 @@ import java.util.*
 
 class HomeassistantRepository(var url: String, authToken: String) {
     private val client: HomeassistantAPI by lazy {
+        if (url.isEmpty()) throw Exception("No Homeassistant URL specified")
+        if (authToken.isEmpty()) throw Exception("No API Token specified")
         val gson = GsonBuilder()
             .setLenient()
             .create()
@@ -46,7 +48,8 @@ class HomeassistantRepository(var url: String, authToken: String) {
     }
 
     suspend fun putState(newState: Long, context: Context): List<HomeassistantPOJO.EntityResponse?>? {
-        val entityId = Prefs(context).entityId ?: throw Exception("No entity ID specified")
+        val entityId = Prefs(context).entityId
+        if (entityId.isEmpty()) throw Exception("No entity ID specified")
         val timeString = getDateTime(newState)
         return client.updateEntity(HomeassistantPOJO.DatetimeServiceBody(entityId, timeString))
     }
