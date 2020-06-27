@@ -9,23 +9,32 @@ import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.*
 
 
-class HomeassistantRepository(var url: String) {
+class HomeassistantRepository(var url: String, authToken: String) {
     private val client: HomeassistantAPI by lazy {
         val gson = GsonBuilder()
             .setLenient()
             .create()
 
-        val httpClient = if (BuildConfig.DEBUG) {
+        val httpClientBuilder = if (BuildConfig.DEBUG) {
             val interceptor = HttpLoggingInterceptor()
             interceptor.level = HttpLoggingInterceptor.Level.BODY
-            OkHttpClient.Builder().addInterceptor(interceptor).build()
-        } else OkHttpClient.Builder().build()
+            OkHttpClient.Builder().addInterceptor(interceptor)
+        } else OkHttpClient.Builder()
 
-        // Fix URL in case user enters it wrong
+        val httpClient = httpClientBuilder.addInterceptor { chain ->
+            val request = chain.request().newBuilder().addHeader("Authorization", "Bearer $authToken").build()
+            chain.proceed(request)
+        }.build()
+
+        // Add trailing URL backslash in case user doesn't input it
         if (!url.endsWith("/"))
             url += "/"
+        // Remove "api/" suffix as it'll be appended later already
+        url = url.removeSuffix("api/")
 
 
         val retrofit = Retrofit.Builder()
@@ -37,24 +46,30 @@ class HomeassistantRepository(var url: String) {
         retrofit.create(HomeassistantAPI::class.java)
     }
 
-    suspend fun putState(newState: Long, context: Context): HomeassistantPOJO.EntityResponse? {
+    suspend fun putState(newState: Long, context: Context): List<HomeassistantPOJO.EntityResponse?> {
         //TODO Error Handling, default values etc
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val authTokenKey = context.resources.getString(R.string.HA_API_TOKEN)
-        var authToken = sharedPreferences.getString(authTokenKey, "")!!
-        authToken = "Bearer $authToken"
-        val entityIdKey = context.resources.getString(R.string.ALARM_ENTITY_ID)
+
+        val entityIdKey = KeyConstants(context.resources).ENTITIY_ID_KEY
         val entityId = sharedPreferences.getString(entityIdKey, "")!!
+        val timestring = getDateTime(newState)
         return try {
-            client.updateEntity(authToken, entityId, HomeassistantPOJO.Entity(newState))
+            client.updateEntity(
+                HomeassistantPOJO.DatetimeServiceBody(entityId, timestring!!)
+            )
         } catch (he: HttpException) {
             Timber.w("Putting state failed with HTTP ${he.code()}: ${he.message()}")
-            null
+            Collections.emptyList()
         }
     }
 
-    suspend fun getStatus(token: String): HomeassistantPOJO.ApiResponse? {
-        val authToken = "Bearer $token"
-        return client.getApiStatus(authToken)
+    private fun getDateTime(input: Long): String? {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        val netDate = Date(input)
+        return sdf.format(netDate)
+    }
+
+    suspend fun getStatus(): HomeassistantPOJO.ApiResponse? {
+        return client.getApiStatus()
     }
 }

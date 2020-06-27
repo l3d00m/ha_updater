@@ -4,15 +4,18 @@ import com.google.gson.annotations.SerializedName
 
 object HomeassistantPOJO {
     data class EntityResponse(
-        val entity_id: String,
+        @SerializedName("entity_id")
+        val entityId: String,
         val last_changed: String,
         val last_updated: String,
         val state: String
     )
 
-    data class Entity(
-        @SerializedName("state")
-        val newState: Long
+    data class DatetimeServiceBody(
+        @SerializedName("entity_id")
+        val entityId: String,
+        @SerializedName("datetime")
+        val datetime: String
     )
 
     data class ApiResponse(

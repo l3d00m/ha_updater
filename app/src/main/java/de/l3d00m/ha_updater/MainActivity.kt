@@ -19,6 +19,6 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(toolbar)
 
-        HomeassistantInteractor(this).pushNewAlarm()
+        //HomeassistantInteractor(this).pushNewAlarm()
     }
 }

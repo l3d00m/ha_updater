@@ -7,4 +7,5 @@ class KeyConstants(resources: Resources) {
     val HA_URL_KEY = resources.getString(R.string.HA_URL)
     val ENTITIY_ID_KEY = resources.getString(R.string.ALARM_ENTITY_ID)
     val CONNECTION_STATE = resources.getString(R.string.CONNECTION_STATE)
+    val UPDATE_ENABLED = resources.getString(R.string.ENABLE_PUSH_ALARM)
 }
