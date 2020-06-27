@@ -8,7 +8,7 @@ interface HomeassistantAPI {
     @POST("api/services/input_datetime/set_datetime")
     suspend fun updateEntity(
         @Body datetimeServiceBody: HomeassistantPOJO.DatetimeServiceBody
-    ): List<HomeassistantPOJO.EntityResponse?>
+    ): List<HomeassistantPOJO.EntityResponse?>?
 
     @Headers("Content-Type: application/json")
     @GET("api/")

@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.content.Context
 import android.webkit.URLUtil
 import androidx.preference.PreferenceManager
-import kotlinx.coroutines.*
 import timber.log.Timber
 import java.lang.Exception
 import java.lang.NullPointerException
@@ -13,16 +12,15 @@ class HomeassistantInteractor(private val context: Context) {
     private var repository: HomeassistantRepository? = null
 
     suspend fun pushNewAlarm(): String {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val baseUrl = sharedPreferences.getString(KeyConstants(context.resources).HA_URL_KEY, "")
+        val prefs = Prefs(context)
+        val baseUrl = prefs.homeassistantUrl
         if (!URLUtil.isValidUrl(baseUrl)) {
             throw Exception("Invalid URL provided, it was: $baseUrl")
         }
 
-        val authTokenKey = context.resources.getString(R.string.HA_API_TOKEN)
-        val authToken = sharedPreferences.getString(authTokenKey, "")!!
+        val authToken = prefs.apiToken ?: throw NullPointerException("No API token provided")
         // Null cast because URLUtil returns false if URL is null
-        repository = HomeassistantRepository(baseUrl!!, authToken.trim())
+        repository = HomeassistantRepository(baseUrl!!, authToken)
 
         val response = repository?.putState(getNextAlarmMs(), context)
         val entityId: String = response?.elementAtOrNull(0)?.entityId ?: throw NullPointerException("Received wrong response from HA")

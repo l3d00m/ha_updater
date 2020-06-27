@@ -5,10 +5,9 @@ import androidx.preference.PreferenceManager
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import timber.log.Timber
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,24 +45,13 @@ class HomeassistantRepository(var url: String, authToken: String) {
         retrofit.create(HomeassistantAPI::class.java)
     }
 
-    suspend fun putState(newState: Long, context: Context): List<HomeassistantPOJO.EntityResponse?> {
-        //TODO Error Handling, default values etc
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-
-        val entityIdKey = KeyConstants(context.resources).ENTITIY_ID_KEY
-        val entityId = sharedPreferences.getString(entityIdKey, "")!!
-        val timestring = getDateTime(newState)
-        return try {
-            client.updateEntity(
-                HomeassistantPOJO.DatetimeServiceBody(entityId, timestring!!)
-            )
-        } catch (he: HttpException) {
-            Timber.w("Putting state failed with HTTP ${he.code()}: ${he.message()}")
-            Collections.emptyList()
-        }
+    suspend fun putState(newState: Long, context: Context): List<HomeassistantPOJO.EntityResponse?>? {
+        val entityId = Prefs(context).entityId ?: throw Exception("No entity ID specified")
+        val timeString = getDateTime(newState)
+        return client.updateEntity(HomeassistantPOJO.DatetimeServiceBody(entityId, timeString))
     }
 
-    private fun getDateTime(input: Long): String? {
+    private fun getDateTime(input: Long): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         val netDate = Date(input)
         return sdf.format(netDate)

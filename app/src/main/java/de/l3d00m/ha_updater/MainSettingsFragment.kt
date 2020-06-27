@@ -1,15 +1,13 @@
 package de.l3d00m.ha_updater
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.URLUtil
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -21,45 +19,51 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
         setPreferencesFromResource(R.xml.settings_fragment, rootKey)
 
         // Set hint for EditText here because it doesn't work in XML with androidx preferences
-        val apiUrlEditText: EditTextPreference? = findPreference(KeyConstants(resources).HA_URL_KEY)
+        val apiUrlEditText: EditTextPreference? = findPreference(resources.getString(R.string.HA_URL))
         apiUrlEditText?.setOnBindEditTextListener { editText -> editText.hint = "http://192.168.0.100:8123/" }
 
-        val alarmEntityEditText: EditTextPreference? = findPreference(KeyConstants(resources).ENTITIY_ID_KEY)
+        val alarmEntityEditText: EditTextPreference? = findPreference(resources.getString(R.string.ALARM_ENTITY_ID))
         alarmEntityEditText?.setOnBindEditTextListener { editText -> editText.hint = "input_datetime.next_alarm_clock" }
 
-        val tokenEditText: EditTextPreference? = findPreference(KeyConstants(resources).API_TOKEN_KEY)
+        val tokenEditText: EditTextPreference? = findPreference(resources.getString(R.string.HA_API_TOKEN))
 
         apiUrlEditText?.onPreferenceChangeListener = this
         tokenEditText?.onPreferenceChangeListener = this
+        alarmEntityEditText?.onPreferenceChangeListener = this
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val token = PreferenceManager.getDefaultSharedPreferences(context).getString(KeyConstants(resources).API_TOKEN_KEY, null)
-        val url = PreferenceManager.getDefaultSharedPreferences(context).getString(KeyConstants(resources).HA_URL_KEY, null)
-        updateConnectionStatus(url, token)
+        val prefs = Prefs(requireContext())
+        updateConnectionStatus(prefs.homeassistantUrl, prefs.apiToken)
     }
 
     override fun onPreferenceChange(preference: Preference?, newValue: Any?): Boolean {
         val url: String?
         val token: String?
+        val prefs = Prefs(requireContext())
         when (preference?.key) {
-            KeyConstants(resources).HA_URL_KEY -> {
-                token = PreferenceManager.getDefaultSharedPreferences(context).getString(KeyConstants(resources).API_TOKEN_KEY, null)
+            resources.getString(R.string.HA_URL) -> {
                 url = newValue as? String
+                updateConnectionStatus(url, prefs.apiToken)
             }
-            KeyConstants(resources).API_TOKEN_KEY -> {
-                url = PreferenceManager.getDefaultSharedPreferences(context).getString(KeyConstants(resources).HA_URL_KEY, null)
+            resources.getString(R.string.HA_API_TOKEN) -> {
                 token = newValue as? String
+                updateConnectionStatus(prefs.homeassistantUrl, token)
             }
-            else -> return true
+            resources.getString(R.string.ALARM_ENTITY_ID) -> {
+                val entityId = newValue as? String
+                if (entityId != null && !entityId.startsWith("input_datetime.")) {
+                    Toast.makeText(context, "Not saved - entity has to be of type input_datetime", Toast.LENGTH_LONG).show()
+                    return false
+                }
+            }
         }
-        updateConnectionStatus(url, token)
         return true
     }
 
     private fun updateConnectionStatus(url: String?, token: String?) {
-        val connectionState: Preference? = findPreference(KeyConstants(resources).CONNECTION_STATE)
+        val connectionState: Preference? = findPreference(resources.getString(R.string.CONNECTION_STATE))
         if (token == null) {
             connectionState?.summary = "Not connected - no access token provided"
             return

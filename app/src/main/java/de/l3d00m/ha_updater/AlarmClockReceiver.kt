@@ -14,7 +14,7 @@ class AlarmClockReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED)
             return // Wrong action, return
-        val enabled = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(KeyConstants(context.resources).UPDATE_ENABLED, false)
+        val enabled = Prefs(context).updatesEnabled
         if (!enabled) {
             Timber.i("Updates to HA disabled")
             return
