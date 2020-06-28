@@ -5,9 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.preference.PreferenceManager
 import kotlinx.coroutines.*
-import retrofit2.HttpException
 import timber.log.Timber
 
 class AlarmClockReceiver : BroadcastReceiver() {

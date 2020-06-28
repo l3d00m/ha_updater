@@ -3,10 +3,7 @@ package de.l3d00m.ha_updater
 import android.app.AlarmManager
 import android.content.Context
 import android.webkit.URLUtil
-import androidx.preference.PreferenceManager
 import timber.log.Timber
-import java.lang.Exception
-import java.lang.NullPointerException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,7 +38,7 @@ class HomeassistantInteractor(private val context: Context, token: String? = nul
 
     suspend fun getApiStatus(): String {
         val response = repository?.getApiStatus() ?: throw Exception("Received unexpected API status response (was null)")
-        return response.message
+        return response.message ?: ""
     }
 
     private fun getNextAlarmMs(): Long {
