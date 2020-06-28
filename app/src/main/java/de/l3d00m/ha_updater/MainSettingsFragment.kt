@@ -1,5 +1,6 @@
 package de.l3d00m.ha_updater
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.webkit.URLUtil
@@ -13,6 +14,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import timber.log.Timber
+import java.util.*
 
 
 class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChangeListener {
@@ -21,10 +23,10 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
 
         // Set hint for EditText here because it doesn't work in XML with androidx preferences
         val apiUrlEditText: EditTextPreference? = findPreference(resources.getString(R.string.HA_URL))
-        apiUrlEditText?.setOnBindEditTextListener { editText -> editText.hint = "http://192.168.0.100:8123/" }
+        apiUrlEditText?.setOnBindEditTextListener { editText -> editText.hint = "e.g. http://192.168.0.100:8123" }
 
         val alarmEntityEditText: EditTextPreference? = findPreference(resources.getString(R.string.ALARM_ENTITY_ID))
-        alarmEntityEditText?.setOnBindEditTextListener { editText -> editText.hint = "input_datetime.next_alarm_clock" }
+        alarmEntityEditText?.setOnBindEditTextListener { editText -> editText.hint = "e.g. input_datetime.next_alarm" }
 
         val tokenEditText: EditTextPreference? = findPreference(resources.getString(R.string.HA_API_TOKEN))
 
@@ -35,64 +37,68 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val prefs = Prefs(requireContext())
-        updateConnectionStatus(prefs.homeassistantUrl, prefs.apiToken)
-        setEnableSwitchState(prefs.homeassistantUrl, prefs.apiToken, prefs.entityId)
+        val context = context ?: return
+        val prefs = Prefs(context)
+        updateConnectionStatus(context)
+        setEnableSwitchState(prefs)
     }
 
     override fun onPreferenceChange(preference: Preference?, newValue: Any?): Boolean {
-        val prefs = Prefs(requireContext())
-        var url = prefs.homeassistantUrl
-        var token = prefs.apiToken
-        var entityId = prefs.entityId
-
+        // If context should be null for any reason, just return true here
+        val context = context ?: return true
+        val prefs = Prefs(context)
         when (preference?.key) {
             resources.getString(R.string.HA_URL) -> {
-                url = newValue as? String ?: ""
-                updateConnectionStatus(url, token)
+                val url = newValue as? String ?: ""
+                updateConnectionStatus(context, url = url)
+                setEnableSwitchState(prefs, url = url)
             }
             resources.getString(R.string.HA_API_TOKEN) -> {
-                token = newValue as? String ?: ""
-                updateConnectionStatus(url, token)
+                val token = newValue as? String ?: ""
+                updateConnectionStatus(context, token = token)
+                setEnableSwitchState(prefs, token = token)
             }
             resources.getString(R.string.ALARM_ENTITY_ID) -> {
-                entityId = newValue as? String ?: ""
-                if (entityId.isNotEmpty() && !entityId.startsWith("input_datetime.")) {
+                val entityId = newValue as? String ?: ""
+                if (entityId.isNotEmpty() && !entityId.toLowerCase(Locale.ENGLISH).startsWith("input_datetime.")) {
                     Toast.makeText(context, "Not saved - entity has to be of type input_datetime", Toast.LENGTH_LONG).show()
                     return false
                 }
+                setEnableSwitchState(prefs, entityId = entityId)
             }
         }
-        setEnableSwitchState(url, token, entityId)
-
         return true
     }
 
-    private fun setEnableSwitchState(url: String, token: String, entityId: String) {
+    private fun setEnableSwitchState(prefs: Prefs, url: String? = null, token: String? = null, entityId: String? = null) {
         val enableSwitch: SwitchPreferenceCompat? = findPreference(resources.getString(R.string.ENABLE_PUSH_ALARM))!!
-        val shouldBeEnabled = url.isNotEmpty() && token.isNotEmpty() && entityId.isNotEmpty()
+        val newUrl = url ?: prefs.homeassistantUrl
+        val newToken = token ?: prefs.apiToken
+        val newId = entityId ?: prefs.entityId
+        val shouldBeEnabled = newUrl.isNotEmpty() && newToken.isNotEmpty() && newId.isNotEmpty()
         enableSwitch?.isChecked = if (shouldBeEnabled)
             enableSwitch!!.isChecked
         else
             false
         enableSwitch?.isEnabled = shouldBeEnabled
-
-
     }
 
-    private fun updateConnectionStatus(url: String, token: String) {
+    private fun updateConnectionStatus(context: Context, url: String? = null, token: String? = null) {
+        val prefs = Prefs(context)
+        val baseUrl = url ?: prefs.homeassistantUrl
+        val authToken = token ?: prefs.apiToken
         val connectionState: Preference? = findPreference(resources.getString(R.string.CONNECTION_STATE))
-        if (token.isEmpty()) {
+        if (authToken.isEmpty()) {
             connectionState?.summary = "Not connected - no access token provided"
             return
         }
-        if (!URLUtil.isValidUrl(url)) {
+        if (!URLUtil.isValidUrl(baseUrl)) {
             connectionState?.summary = "Not connected - no (valid) URL provided"
             return
         }
         connectionState?.summary = "Connecting..."
 
-        val repository = HomeassistantRepository(url, token.trim())
+        val interactor = HomeassistantInteractor(context.applicationContext, token=authToken, url=baseUrl)
         val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
             when (exception) {
                 is HttpException -> {
@@ -107,7 +113,7 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
             Timber.w("Catched exception: $exception")
         }
         viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
-            val message = repository.getStatus()?.message
+            val message = interactor.getApiStatus()
             connectionState?.summary = "Connected - $message"
         }
     }

@@ -6,15 +6,16 @@ object HomeassistantPOJO {
     data class EntityResponse(
         @SerializedName("entity_id")
         val entityId: String,
-        val last_changed: String,
-        val last_updated: String,
+        @SerializedName("last_changed")
+        val lastChanged: String,
+        @SerializedName("last_updated")
+        val lastUpdated: String,
         val state: String
     )
 
     data class DatetimeServiceBody(
         @SerializedName("entity_id")
         val entityId: String,
-        @SerializedName("datetime")
         val datetime: String
     )
 

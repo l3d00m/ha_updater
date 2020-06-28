@@ -7,8 +7,8 @@ import de.l3d00m.ha_updater.PreferenceHelper.set
 import de.l3d00m.ha_updater.ResourceHelper.strings
 
 class Prefs(context: Context) {
-    // Initialize shared preferences object
-    private val prefs = defaultPrefs(context)
+    // Initialize shared preferences object (with applicationContext to avoid leaks)
+    private val prefs = defaultPrefs(context.applicationContext)
 
     // Values that are defined through the preference fragment, so they are RO
     val apiToken: String = prefs[context.strings[R.string.HA_API_TOKEN], ""]!!

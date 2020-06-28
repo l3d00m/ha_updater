@@ -7,32 +7,51 @@ import androidx.preference.PreferenceManager
 import timber.log.Timber
 import java.lang.Exception
 import java.lang.NullPointerException
+import java.text.SimpleDateFormat
+import java.util.*
 
-class HomeassistantInteractor(private val context: Context) {
-    private var repository: HomeassistantRepository? = null
-
-    suspend fun pushNewAlarm(): String {
+class HomeassistantInteractor(private val context: Context, token: String? = null, url: String? = null) {
+    private val repository: HomeassistantRepository? by lazy {
         val prefs = Prefs(context)
-        val baseUrl = prefs.homeassistantUrl
+        val baseUrl = url ?: prefs.homeassistantUrl
         if (!URLUtil.isValidUrl(baseUrl)) {
             throw Exception("Invalid URL provided, it was: $baseUrl")
         }
 
-        val authToken = prefs.apiToken ?: throw NullPointerException("No API token provided")
+        // Fetch token and remove whitespace
+        var authToken = token ?: prefs.apiToken
+        authToken = authToken.trim()
+        if (authToken.isEmpty()) throw NullPointerException("No API token provided")
         // Null cast because URLUtil returns false if URL is null
-        repository = HomeassistantRepository(baseUrl!!, authToken)
+        HomeassistantRepository(baseUrl, authToken)
+    }
 
-        val response = repository?.putState(getNextAlarmMs(), context)
-        val entityId: String = response?.elementAtOrNull(0)?.entityId ?: throw NullPointerException("Received wrong response from HA")
-        Timber.i(entityId)
-        return entityId
+    suspend fun pushNewAlarm(): String {
+        val entityId = Prefs(context).entityId
+        if (entityId.isEmpty()) throw Exception("No entity ID specified")
+        val timeString = convertDatetimeToString(getNextAlarmMs())
+
+        val response = repository?.putState(entityId, timeString) ?: throw Exception("Received unexpected response from HA service API (was null)")
+        val returnedEntityId: String = response.elementAtOrNull(0)?.entityId ?: throw NullPointerException("Received empty response from HA (wrong Entity ID)")
+        Timber.i(returnedEntityId)
+        return returnedEntityId
+    }
+
+    suspend fun getApiStatus(): String {
+        val response = repository?.getApiStatus() ?: throw Exception("Received unexpected API status response (was null)")
+        return response.message
     }
 
     private fun getNextAlarmMs(): Long {
-        val alarmManager: AlarmManager? =
-            context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+        val alarmManager: AlarmManager? = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         val clockInfo: AlarmManager.AlarmClockInfo? = alarmManager?.nextAlarmClock
         return clockInfo?.triggerTime ?: 0
+    }
+
+    private fun convertDatetimeToString(input: Long): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        val netDate = Date(input)
+        return sdf.format(netDate)
     }
 
 }

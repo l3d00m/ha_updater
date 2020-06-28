@@ -23,7 +23,7 @@ class AlarmClockReceiver : BroadcastReceiver() {
             Timber.w("Pushing new alarm date failed with $exception")
         }
         GlobalScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
-            val entityId = HomeassistantInteractor(context).pushNewAlarm()
+            val entityId = HomeassistantInteractor(context.applicationContext).pushNewAlarm()
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "Updated alarm clock time in Homeassistant ($entityId)", Toast.LENGTH_LONG).show()
             }
