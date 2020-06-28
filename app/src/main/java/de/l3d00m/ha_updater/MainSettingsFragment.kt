@@ -84,7 +84,10 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
 
     override fun onPreferenceClick(preference: Preference?): Boolean {
         val context = context ?: return true
-        syncAlarm(context)
+        if (isAllFieldsFilled(Prefs(context)))
+            syncAlarm(context)
+        else
+            Toast.makeText(context, "Please fill all fields first", Toast.LENGTH_SHORT).show()
         return true
     }
 
@@ -176,7 +179,7 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
             resources.getString(R.string.ENABLE_PUSH_ALARM)
         )
         if (key?.toLowerCase(Locale.ENGLISH) in validKeys) {
-            if (key.toLowerCase(Locale.ENGLISH) in listOf(resources.getString(R.string.HA_URL), resources.getString(R.string.HA_API_TOKEN)))
+            if (key?.toLowerCase(Locale.ENGLISH) in listOf(resources.getString(R.string.HA_URL), resources.getString(R.string.HA_API_TOKEN)))
                 updateApiStatus(context)
 
             updateAlarmClockFields(prefs)

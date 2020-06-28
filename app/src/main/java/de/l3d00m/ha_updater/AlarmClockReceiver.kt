@@ -22,8 +22,13 @@ class AlarmClockReceiver : BroadcastReceiver() {
         }
         GlobalScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
             val newState = HomeassistantInteractor(context.applicationContext).pushNewAlarm()
+            val code = newState.result
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Updated alarm clock time in Homeassistant ($newState)", Toast.LENGTH_LONG).show()
+                if (code == ApiResult.ResultCode.SUCCESS)
+                    Toast.makeText(context, "Updated alarm clock time in Homeassistant ($newState)", Toast.LENGTH_LONG).show()
+                else {
+                    TODO("Retry not yet implemented")
+                }
             }
         }
 

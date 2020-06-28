@@ -3,9 +3,14 @@ package de.l3d00m.ha_updater
 import android.app.AlarmManager
 import android.content.Context
 import android.webkit.URLUtil
+import de.l3d00m.ha_updater.ApiResult.HomeassistantResult
+import de.l3d00m.ha_updater.ApiResult.ResultCode
+import retrofit2.HttpException
 import timber.log.Timber
+import java.net.ConnectException
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeoutException
 
 class HomeassistantInteractor(private val context: Context, token: String? = null, url: String? = null) {
     private val repository: HomeassistantRepository? by lazy {
@@ -23,22 +28,79 @@ class HomeassistantInteractor(private val context: Context, token: String? = nul
         HomeassistantRepository(baseUrl, authToken)
     }
 
-    suspend fun pushNewAlarm(): String {
+    suspend fun pushNewAlarm(): HomeassistantResult {
+        var code: ResultCode
+        var message: String? = null
         val entityId = Prefs(context).entityId
-        if (entityId.isBlank()) throw Exception("No entity ID specified")
-        val entityResponse = repository?.getEntityStatus(entityId)
+        if (entityId.isBlank()) code = ResultCode.MISSING_FIELD
+        try {
+            val entityResponse = repository?.getEntityStatus(entityId)
+            code = if (entityResponse == null) ResultCode.API_ERROR
+            else ResultCode.SUCCESS
+        } catch (e: Exception) {
+            when (e) {
+                is HttpException -> {
+                    if (e.code() == 401 || e.code() == 403) {
+                        code = ResultCode.INVALID_TOKEN
+                    } else if (e.code() == 404) {
+                        code = ResultCode.INVALID_ENTITY
+                    } else {
+                        message = "${e.code()} ${e.message()}"
+                        code = ResultCode.NETWORK_ERROR
+                    }
+                }
+                is TimeoutException -> {
+                    code = ResultCode.NETWORK_ERROR
+                }
+                is ConnectException -> {
+                    code = ResultCode.NETWORK_ERROR
+                }
+                else -> {
+                    code = ResultCode.UNKNOWN_ERROR
+                    message = "${e.message}"
+                }
+            }
+        }
+
 
         val timeString = convertDatetimeToString(getNextAlarmMs())
 
         val serviceResponse = repository?.putState(entityId, timeString) ?: throw Exception("Received unexpected response from HA service API (was null)")
         val newState: String? = serviceResponse.elementAtOrNull(0)?.state
         if (newState == null) Timber.i("Entity was already set to the same alarm")
-        return newState ?: timeString
+        return HomeassistantResult(code)
     }
 
-    suspend fun getApiStatus(): String {
-        val response = repository?.getApiStatus() ?: throw Exception("Received unexpected API status response (was null)")
-        return response.message ?: ""
+    suspend fun getApiStatus(): HomeassistantResult {
+        var code: ResultCode
+        var message: String? = null
+        try {
+            val response = repository?.getApiStatus()
+            code = if (response == null) ResultCode.API_ERROR
+            else ResultCode.SUCCESS
+        } catch (e: Exception) {
+            when (e) {
+                is HttpException -> {
+                    if (e.code() == 401 || e.code() == 403) {
+                        code = ResultCode.INVALID_TOKEN
+                    } else {
+                        message = "${e.code()} ${e.message()}"
+                        code = ResultCode.NETWORK_ERROR
+                    }
+                }
+                is TimeoutException -> {
+                    code = ResultCode.NETWORK_ERROR
+                }
+                is ConnectException -> {
+                    code = ResultCode.NETWORK_ERROR
+                }
+                else -> {
+                    code = ResultCode.UNKNOWN_ERROR
+                    message = "${e.message}"
+                }
+            }
+        }
+        return HomeassistantResult(result = code, message = message)
     }
 
     private fun getNextAlarmMs(): Long {
