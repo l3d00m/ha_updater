@@ -14,12 +14,13 @@ class Prefs(context: Context) {
     val apiToken: String = prefs[context.strings[R.string.HA_API_TOKEN], ""]!!
     val homeassistantUrl: String = prefs[context.strings[R.string.HA_URL], ""]!!
     val entityId: String = prefs[context.strings[R.string.ALARM_ENTITY_ID], ""]!!
-    val updatesEnabled: Boolean = prefs[context.strings[R.string.ENABLE_PUSH_ALARM], false]!!
+    val syncingEnabledUser: Boolean = prefs[context.strings[R.string.ENABLE_PUSH_ALARM], false]!!
 
     // Manually defined values that are not defined through the Preference fragment
     companion object {
         private const val DATETIME_TO_PUBLISH_KEY = "DATETIME_TO_PUBLISH"
         private const val RETRY_COUNTER_KEY = "RETRY_COUNTER"
+        private const val UPDATES_ACTIVE = "UPDATES_ACTIVE"
     }
 
     var datetimeToPublish: Long
@@ -28,5 +29,8 @@ class Prefs(context: Context) {
     var retryCounter: Int
         get() = prefs[RETRY_COUNTER_KEY, 0]!!
         set(value) = prefs.set(RETRY_COUNTER_KEY, value)
+    var syncingActive: Boolean
+        get() = prefs[UPDATES_ACTIVE, false]!!
+        set(value) = prefs.set(UPDATES_ACTIVE, value)
 }
 

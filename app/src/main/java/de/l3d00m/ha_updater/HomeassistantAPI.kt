@@ -4,13 +4,16 @@ import retrofit2.http.*
 
 
 interface HomeassistantAPI {
-    @Headers("Content-Type: application/json")
     @POST("api/services/input_datetime/set_datetime")
     suspend fun updateEntity(
         @Body datetimeServiceBody: HomeassistantPOJO.DatetimeServiceBody
     ): List<HomeassistantPOJO.EntityResponse?>?
 
-    @Headers("Content-Type: application/json")
     @GET("api/")
     suspend fun getApiStatus(): HomeassistantPOJO.ApiResponse?
+
+    @GET("api/states/{entity_id}")
+    suspend fun getEntity(
+        @Path("entity_id") entityId: String
+    ): HomeassistantPOJO.EntityResponse?
 }

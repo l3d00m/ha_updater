@@ -17,18 +17,22 @@ class HomeassistantRepository(url: String, authToken: String) {
             .setLenient()
             .create()
 
-        // Add logs to HTTP calls in case of debug build
-        val httpClientBuilder = if (BuildConfig.DEBUG) {
-            val interceptor = HttpLoggingInterceptor()
-            interceptor.level = HttpLoggingInterceptor.Level.HEADERS
-            OkHttpClient.Builder().addInterceptor(interceptor)
-        } else OkHttpClient.Builder()
-
+        var httpClientBuilder = OkHttpClient.Builder()
         // Append the auth token to all requests as a Header
-        val httpClient = httpClientBuilder.addInterceptor { chain ->
-            val request = chain.request().newBuilder().addHeader("Authorization", "Bearer $authToken").build()
+        httpClientBuilder = httpClientBuilder.addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .addHeader("Authorization", "Bearer $authToken")
+                .addHeader("Content-Type", "application/json")
+                .build()
             chain.proceed(request)
-        }.build()
+        }
+        // Add logs to HTTP calls in case of debug build
+        httpClientBuilder = if (BuildConfig.DEBUG) {
+            val interceptor = HttpLoggingInterceptor()
+            interceptor.level = HttpLoggingInterceptor.Level.BODY
+            httpClientBuilder.addInterceptor(interceptor)
+        } else httpClientBuilder
+
 
         // Modify the URL
         var baseUrl = url
@@ -41,7 +45,7 @@ class HomeassistantRepository(url: String, authToken: String) {
 
         val retrofit = Retrofit.Builder()
             .baseUrl(baseUrl)
-            .client(httpClient)
+            .client(httpClientBuilder.build())
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
@@ -52,6 +56,9 @@ class HomeassistantRepository(url: String, authToken: String) {
         return client.updateEntity(HomeassistantPOJO.DatetimeServiceBody(entityId, timeString))
     }
 
+    suspend fun getEntityStatus(entityId: String): HomeassistantPOJO.EntityResponse? {
+        return client.getEntity(entityId)
+    }
 
     suspend fun getApiStatus(): HomeassistantPOJO.ApiResponse? {
         return client.getApiStatus()

@@ -7,19 +7,20 @@
     tools:context=".MainActivity">
 
     <EditTextPreference
-        app:icon="@drawable/ic_cloud_upload_black_24dp"
+        app:icon="@drawable/ic_outline_cloud_upload_24"
         app:key="@string/HA_URL"
         app:summary="@string/edit_desc_ha_url"
         app:title="@string/edit_title_ha_url" />
     <EditTextPreference
-        app:icon="@drawable/ic_vpn_key_black_24dp"
+        app:icon="@drawable/ic_outline_vpn_key_24"
         app:key="@string/HA_API_TOKEN"
         app:title="@string/edit_title_access_token" />
     <Preference
         android:clickable="false"
-        app:key="@string/CONNECTION_STATE"
+        app:key="@string/API_CONNECTION_STATE"
+        app:icon="@drawable/ic_outline_info_24"
         app:summary="Not connected"
-        app:title="Connection status" />
+        app:title="API connection status" />
 
     <PreferenceCategory
         app:key="alarm_category"
@@ -27,6 +28,7 @@
 
         <EditTextPreference
             app:key="@string/ALARM_ENTITY_ID"
+            app:icon="@drawable/ic_baseline_link_24"
             app:summary="@string/edit_desc_entity_id"
             app:title="@string/edit_title_entity_id" />
 
@@ -37,6 +39,13 @@
             app:key="@string/ENABLE_PUSH_ALARM"
             app:summary="@string/switch_desc_alarm"
             app:title="@string/switch_title_alarm" />
+
+        <Preference
+            android:clickable="false"
+            app:icon="@drawable/ic_outline_info_24"
+            app:key="@string/ALARM_SYNC_STATE"
+            app:summary="Fetching..."
+            app:title="Alarm syncing status (tap to retry)" />
 
     </PreferenceCategory>
 

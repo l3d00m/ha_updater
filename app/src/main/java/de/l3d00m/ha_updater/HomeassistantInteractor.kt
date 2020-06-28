@@ -21,20 +21,22 @@ class HomeassistantInteractor(private val context: Context, token: String? = nul
         // Fetch token and remove whitespace
         var authToken = token ?: prefs.apiToken
         authToken = authToken.trim()
-        if (authToken.isEmpty()) throw NullPointerException("No API token provided")
+        if (authToken.isBlank()) throw NullPointerException("No API token provided")
         // Null cast because URLUtil returns false if URL is null
         HomeassistantRepository(baseUrl, authToken)
     }
 
     suspend fun pushNewAlarm(): String {
         val entityId = Prefs(context).entityId
-        if (entityId.isEmpty()) throw Exception("No entity ID specified")
+        if (entityId.isBlank()) throw Exception("No entity ID specified")
+        val entityResponse = repository?.getEntityStatus(entityId)
+
         val timeString = convertDatetimeToString(getNextAlarmMs())
 
-        val response = repository?.putState(entityId, timeString) ?: throw Exception("Received unexpected response from HA service API (was null)")
-        val returnedEntityId: String = response.elementAtOrNull(0)?.entityId ?: throw NullPointerException("Received empty response from HA (wrong Entity ID)")
-        Timber.i(returnedEntityId)
-        return returnedEntityId
+        val serviceResponse = repository?.putState(entityId, timeString) ?: throw Exception("Received unexpected response from HA service API (was null)")
+        val newState: String? = serviceResponse.elementAtOrNull(0)?.state
+        if (newState == null) Timber.i("Entity was already set to the same alarm")
+        return newState ?: timeString
     }
 
     suspend fun getApiStatus(): String {

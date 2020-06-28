@@ -14,7 +14,7 @@ class AlarmClockReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED)
             return // Wrong action, return
-        val enabled = Prefs(context).updatesEnabled
+        val enabled = Prefs(context).syncingActive
         if (!enabled) {
             Timber.i("Updates to HA disabled")
             return
@@ -23,9 +23,9 @@ class AlarmClockReceiver : BroadcastReceiver() {
             Timber.w("Pushing new alarm date failed with $exception")
         }
         GlobalScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
-            val entityId = HomeassistantInteractor(context.applicationContext).pushNewAlarm()
+            val newState = HomeassistantInteractor(context.applicationContext).pushNewAlarm()
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Updated alarm clock time in Homeassistant ($entityId)", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Updated alarm clock time in Homeassistant ($newState)", Toast.LENGTH_LONG).show()
             }
         }
 

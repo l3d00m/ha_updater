@@ -17,22 +17,25 @@ import timber.log.Timber
 import java.util.*
 
 
-class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChangeListener {
+class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChangeListener, Preference.OnPreferenceClickListener {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.settings_fragment, rootKey)
 
-        // Set hint for EditText here because it doesn't work in XML with androidx preferences
         val apiUrlEditText: EditTextPreference? = findPreference(resources.getString(R.string.HA_URL))
-        apiUrlEditText?.setOnBindEditTextListener { editText -> editText.hint = "e.g. http://192.168.0.100:8123" }
-
         val alarmEntityEditText: EditTextPreference? = findPreference(resources.getString(R.string.ALARM_ENTITY_ID))
-        alarmEntityEditText?.setOnBindEditTextListener { editText -> editText.hint = "e.g. input_datetime.next_alarm" }
-
         val tokenEditText: EditTextPreference? = findPreference(resources.getString(R.string.HA_API_TOKEN))
+        val alarmEnabledSwitch: SwitchPreferenceCompat? = findPreference(resources.getString(R.string.ENABLE_PUSH_ALARM))
+        val alarmInfoField: Preference? = findPreference(resources.getString(R.string.ALARM_SYNC_STATE))
+
+        // Set hint for EditText here because it doesn't work in XML with androidx preferences
+        apiUrlEditText?.setOnBindEditTextListener { editText -> editText.hint = "e.g. http://192.168.0.100:8123" }
+        alarmEntityEditText?.setOnBindEditTextListener { editText -> editText.hint = "e.g. input_datetime.next_alarm" }
 
         apiUrlEditText?.onPreferenceChangeListener = this
         tokenEditText?.onPreferenceChangeListener = this
         alarmEntityEditText?.onPreferenceChangeListener = this
+        alarmEnabledSwitch?.onPreferenceChangeListener = this
+        alarmInfoField?.onPreferenceClickListener = this
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -40,7 +43,7 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
         val context = context ?: return
         val prefs = Prefs(context)
         updateConnectionStatus(context)
-        setEnableSwitchState(prefs)
+        updateAlarmClockFields(prefs)
     }
 
     override fun onPreferenceChange(preference: Preference?, newValue: Any?): Boolean {
@@ -50,13 +53,17 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
         when (preference?.key) {
             resources.getString(R.string.HA_URL) -> {
                 val url = newValue as? String ?: ""
+                if (url.isNotEmpty() && !URLUtil.isValidUrl(url)) {
+                    Toast.makeText(context, "Not saved - please enter a valid URL", Toast.LENGTH_LONG).show()
+                    return false
+                }
                 updateConnectionStatus(context, url = url)
-                setEnableSwitchState(prefs, url = url)
+                updateAlarmClockFields(prefs, newEnabledState = isAllFieldsFilled(prefs, url = url))
             }
             resources.getString(R.string.HA_API_TOKEN) -> {
                 val token = newValue as? String ?: ""
                 updateConnectionStatus(context, token = token)
-                setEnableSwitchState(prefs, token = token)
+                updateAlarmClockFields(prefs, newEnabledState = isAllFieldsFilled(prefs, token = token))
             }
             resources.getString(R.string.ALARM_ENTITY_ID) -> {
                 val entityId = newValue as? String ?: ""
@@ -64,30 +71,53 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
                     Toast.makeText(context, "Not saved - entity has to be of type input_datetime", Toast.LENGTH_LONG).show()
                     return false
                 }
-                setEnableSwitchState(prefs, entityId = entityId)
+                updateAlarmClockFields(prefs, newEnabledState = isAllFieldsFilled(prefs, entityId = entityId))
+            }
+            resources.getString(R.string.ENABLE_PUSH_ALARM) -> {
+                val enabled = newValue as? Boolean ?: false
+                updateAlarmClockFields(prefs, newCheckedState = enabled)
             }
         }
         return true
     }
 
-    private fun setEnableSwitchState(prefs: Prefs, url: String? = null, token: String? = null, entityId: String? = null) {
-        val enableSwitch: SwitchPreferenceCompat? = findPreference(resources.getString(R.string.ENABLE_PUSH_ALARM))!!
+    override fun onPreferenceClick(preference: Preference?): Boolean {
+        val context = context ?: return true
+        updateAlarmSync(context)
+        return true
+    }
+
+    private fun updateAlarmClockFields(prefs: Prefs, newEnabledState: Boolean? = null, newCheckedState: Boolean? = null) {
+        val enabledState = newEnabledState ?: isAllFieldsFilled(prefs)
+        val checkedState = newCheckedState ?: prefs.syncingEnabledUser
+        val enableSwitch: SwitchPreferenceCompat = findPreference(resources.getString(R.string.ENABLE_PUSH_ALARM)) ?: return
+        enableSwitch.isEnabled = enabledState
+        prefs.syncingActive = enabledState && checkedState
+
+        val syncStatus: Preference = findPreference(resources.getString(R.string.ALARM_SYNC_STATE)) ?: return
+        if (!enabledState) {
+            syncStatus.summary = "Disabled: Please fill all fields above"
+        } else if (!checkedState) {
+            syncStatus.summary = "Disabled by user"
+        } else {
+            syncStatus.summary = "Enabled"
+        }
+
+
+    }
+
+    private fun isAllFieldsFilled(prefs: Prefs, url: String? = null, token: String? = null, entityId: String? = null): Boolean {
         val newUrl = url ?: prefs.homeassistantUrl
         val newToken = token ?: prefs.apiToken
         val newId = entityId ?: prefs.entityId
-        val shouldBeEnabled = newUrl.isNotEmpty() && newToken.isNotEmpty() && newId.isNotEmpty()
-        enableSwitch?.isChecked = if (shouldBeEnabled)
-            enableSwitch!!.isChecked
-        else
-            false
-        enableSwitch?.isEnabled = shouldBeEnabled
+        return newUrl.isNotEmpty() && newToken.isNotEmpty() && newId.isNotEmpty()
     }
 
     private fun updateConnectionStatus(context: Context, url: String? = null, token: String? = null) {
         val prefs = Prefs(context)
         val baseUrl = url ?: prefs.homeassistantUrl
         val authToken = token ?: prefs.apiToken
-        val connectionState: Preference? = findPreference(resources.getString(R.string.CONNECTION_STATE))
+        val connectionState: Preference? = findPreference(resources.getString(R.string.API_CONNECTION_STATE))
         if (authToken.isEmpty()) {
             connectionState?.summary = "Not connected - no access token provided"
             return
@@ -98,23 +128,35 @@ class MainSettingsFragment : PreferenceFragmentCompat(), Preference.OnPreference
         }
         connectionState?.summary = "Connecting..."
 
-        val interactor = HomeassistantInteractor(context.applicationContext, token=authToken, url=baseUrl)
+        val interactor = HomeassistantInteractor(context.applicationContext, token = authToken, url = baseUrl)
         val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+            Timber.w("Getting API status failed with $exception")
             when (exception) {
-                is HttpException -> {
-                    Timber.w("Getting API status failed with HTTP ${exception.code()}: ${exception.message()}")
-                    connectionState?.summary = "Connection failed - ${exception.code()} ${exception.message()}"
-                }
-                else -> {
-                    Timber.w("Getting API status failed with $exception")
-                    connectionState?.summary = "Connection failed with $exception"
-                }
+                is HttpException -> connectionState?.summary = "Connection failed - ${exception.code()} ${exception.message()}"
+                else -> connectionState?.summary = "Connection failed with $exception"
             }
             Timber.w("Catched exception: $exception")
         }
         viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
             val message = interactor.getApiStatus()
             connectionState?.summary = "Connected - $message"
+        }
+    }
+
+    private fun updateAlarmSync(context: Context) {
+        val alarmInfoField: Preference? = findPreference(resources.getString(R.string.ALARM_SYNC_STATE))
+        val interactor = HomeassistantInteractor(context.applicationContext)
+
+        val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+            Timber.w("Pushing alarm failed with $exception")
+            when (exception) {
+                is HttpException -> alarmInfoField?.summary = "Enabled - Last push failed with HTTP error ${exception.code()} ${exception.message()}"
+                else -> alarmInfoField?.summary = "Enabled - Last push failed with $exception"
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+            val state = interactor.pushNewAlarm()
+            alarmInfoField?.summary = "Enabled - Last pushed alarm was $state"
         }
     }
 }
